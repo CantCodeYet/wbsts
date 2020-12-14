@@ -1,370 +1,479 @@
-<!DOCTYPE html>
 <html>
-	<head>
-		<style>
-        	*{outline:none;}
-			input{
-				width: 300px;
-                box-sizing:border-box;
-                font-size: 18px;
-                padding: 0.3em;
-                border:1px solid silver; 
-			}
-            #champion-autocomplete{
-            	position:relative;
-            	display:inline-block;
-                height:38px;
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <head>
+    	<meta name="mobile-web-app-capable" content="yes">
+    	<title>Japanese alphabets test</title>
+        <!--script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script-->
+        <link rel="stylesheet" href="res/bootstrap.css">
+        <!--script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script-->
+        <style>
+            *{
+                outline: none;
             }
-            #autocomplete-elements{
-            	z-index:1;
-            	display:none;
-            	overflow:auto;
-                max-height: 500px;
-            	position: absolute;
-                right:0;
-                left:0;
-                background-color: white;
-            	border: 1px solid silver;
-                margin-top: -1px;
-            }
-            #autocomplete-elements a {
-            	display: block;
-                padding: 9px;
-                border-bottom:1px solid silver;
-                margin-bottom: -1px;
-                cursor:pointer;
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
- 			    -khtml-user-select: none;
-      		 	-moz-user-select: none;
-        		-ms-user-select: none;
-            	user-select: none;
-            }
-            #autocomplete-elements a:hover {
-            	background-color: #dddddd;
-            }
-            #autocomplete-elements a.active {
-            	background-color: #2196f3;
-            }
-         
-            select{
-            	font-size: 18px;
-            }
-            button {
-            	font-size: 18px;
-                position: relative;
-                display: inline-block;
-                box-sizing: border-box;
-                border: none;
-                border-radius: 0.24em;
-                padding: 0.5em 1em;
-                box-shadow: 0 0.18em 0.06em -0.12em rgba(0, 0, 0, 0.2), 0 0.12em 0.12em 0 rgba(0, 0, 0, 0.14), 0 0.06em 0.3em 0 rgba(0, 0, 0, 0.12);
-                vertical-align: middle;
+            .title{
                 text-align: center;
-                color: #ffffff;
-                background-color: #2196f3;
-                line-height: 1em;
-                cursor: pointer;
-                transition: box-shadow 0.2s;
-                overflow: hidden;
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                -khtml-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
+            }
+
+            .flashcard{
+                font-size: 15rem;
+                text-align: center;
                 user-select: none;
             }
-            button::-moz-focus-inner {
-                border: none;
-            }
-            button::before {
-                content: "";
-                position: absolute;
-                top: 0;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background-color: #ffffff;
-                opacity: 0;
-                transition: opacity 0.2s;
-            }
-            button::after {
-                content: "";
-                position: absolute;
-                left: 50%;
-                top: 50%;
-                border-radius: 50%;
-                padding: 50%;
-                width: 2em;
-                height: 2em;
-                background-color: #ffffff;
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(1);
-                transition: opacity 1s, transform 0.8s;
-            }
-            button:hover {
-                box-shadow: 0 0.12em 0.24em -0.06em rgba(0, 0, 0, 0.2), 0 0.24em 0.3em 0 rgba(0, 0, 0, 0.14), 0 0.06em 0.6em 0 rgba(0, 0, 0, 0.12);
+
+            .button{
+                text-align: center;
+                border-radius: 1rem;
             }
 
-            button:hover::before {
-                opacity: 0.08;
+            select, option{
+                text-transform: capitalize;
             }
 
-            button:hover:focus::before {
-                opacity: 0.3;
+            .button:hover{
+                background-color: #343a40!important;
+                color: #f8f9fa;
             }
+            thead tr:nth-child(1) th{background: white; position: sticky;top: 0;z-index: 10;}
+            .table-responsive{max-height:50vh; overflow:auto;} 
+        </style>
+        <script>
+            let panes = {started: undefined, before: undefined, buttonBar: undefined, statsPane: undefined};
+            let inputs = {inVocali: undefined, inConsonanti: undefined, selectAlphabet: undefined};
+            let outputs = {flashcard: undefined, statistiche: undefined};
+            let exceptions = {"si": "shi", "zi": "ji", "ti":"chi", "tu":"tsu", "di":"dji", "du":"dzu", "hu":"fu"};
+            let ExtraHiragana = {
+                "n":"ん",
+                "a":"あ","i":"い","u":"う","e":"え","o":"お",
+                "ka":"か","ki":"き","ku":"く","ke":"け","ko":"こ",
+                "ga":"が","gi":"ぎ","gu":"ぐ","ge":"げ","go":"ご",
+                "sa":"さ","shi":"し","su":"す","se":"せ","so":"そ",
+                "za":"ざ","ji":"じ","zu":"ず","ze":"ぜ","zo":"ぞ",
+                "ta":"た","chi":"ち","tsu":"つ","te":"て","to":"と",
+                "da":"だ","dji":"ぢ","dzu":"づ","de":"で","do":"ど",
+                "na":"な","ni":"に","nu":"ぬ","ne":"ね","no":"の",
+                "ha":"は","hi":"ひ","fu":"ふ","he":"へ","ho":"ほ",
+                "ba":"ば","bi":"び","bu":"ぶ","be":"べ","bo":"ぼ",
+                "pa":"ぱ","pi":"ぴ","pu":"ぷ","pe":"ぺ","po":"ぽ",
+                "ma":"ま","mi":"み","mu":"む","me":"め","mo":"も",
+                "ya":"や","yu":"ゆ","yo":"よ",
+                "ra":"ら","ri":"り","ru":"る","re":"れ","ro":"ろ",
+                "wa":"わ","wi":"ゐ","we":"ゑ","wo":"を"
+            };
+            let extraKatakana = {
+                "n":"ン",
+                "a":"ア","i":"イ","u":"ウ","e":"エ","o":"オ",
+                "ka":"カ","ki":"キ","ku":"ク","ke":"ケ","ko":"コ",
+                "ga":"ガ","gi":"ギ","gu":"グ","ge":"ゲ","go":"ゴ",
+                "sa":"サ","shi":"シ","su":"ス","se":"セ","so":"ソ",
+                "za":"ザ","ji":"ジ","zu":"ズ","ze":"ゼ","zo":"ゾ",
+                "ta":"タ","chi":"チ","tsu":"ツ","te":"テ","to":"ト",
+                "da":"ダ","dji":"ヂ","dzu":"ヅ","de":"デ","do":"ド",
+                "na":"ナ","ni":"ニ","nu":"ヌ","ne":"ネ","no":"ノ",
+                "ha":"ハ","hi":"ヒ","fu":"フ","he":"ヘ","ho":"ホ",
+                "ba":"バ","bi":"ビ","bu":"ブ","be":"ベ","bo":"ボ",
+                "pa":"パ","pi":"ピ","pu":"プ","pe":"ペ","po":"ポ",
+                "ma":"マ","mi":"ミ","mu":"ム","me":"メ","mo":"モ",
+                "ya":"ヤ","yi":"","yu":"ユ","ye":"������","yo":"ヨ",
+                "ra":"ラ","ri":"リ","ru":"ル","re":"レ","ro":"ロ",
+                "wa":"ワ","wi":"ヰ","wu":"","we":"ヱ","wo":"ヲ"
+            };
+            let hiragana = {
+                "n":"ん",
+                "a":"あ","i":"い","u":"う","e":"え","o":"お",
+                "ka":"か","ki":"き","ku":"く","ke":"け","ko":"こ",
+                "ga":"が","gi":"ぎ","gu":"ぐ","ge":"げ","go":"ご",
+                "sa":"さ","shi":"し","su":"す","se":"せ","so":"そ",
+                "za":"ざ","ji":"じ","zu":"ず","ze":"ぜ","zo":"ぞ",
+                "ta":"た","chi":"ち","tsu":"つ","te":"て","to":"と",
+                "da":"だ","dji":"ぢ","dzu":"づ","de":"で","do":"ど",
+                "na":"な","ni":"に","nu":"ぬ","ne":"ね","no":"の",
+                "ha":"は","hi":"ひ","fu":"ふ","he":"へ","ho":"ほ",
+                "ba":"ば","bi":"び","bu":"ぶ","be":"べ","bo":"ぼ",
+                "pa":"ぱ","pi":"ぴ","pu":"ぷ","pe":"ぺ","po":"ぽ",
+                "ma":"ま","mi":"み","mu":"む","me":"め","mo":"も",
+                "ya":"や","yu":"ゆ","yo":"よ",
+                "ra":"ら","ri":"り","ru":"る","re":"れ","ro":"ろ",
+                "wa":"わ","wo":"を"
+            };
+            let katakana = {
+                "n":"ン",
+                "a":"ア","i":"イ","u":"ウ","e":"エ","o":"オ",
+                "ka":"カ","ki":"キ","ku":"ク","ke":"ケ","ko":"コ",
+                "ga":"ガ","gi":"ギ","gu":"グ","ge":"ゲ","go":"ゴ",
+                "sa":"サ","shi":"シ","su":"ス","se":"セ","so":"ソ",
+                "za":"ザ","ji":"ジ","zu":"ズ","ze":"ゼ","zo":"ゾ",
+                "ta":"タ","chi":"チ","tsu":"ツ","te":"テ","to":"ト",
+                "da":"ダ","dji":"ヂ","dzu":"ヅ","de":"デ","do":"ド",
+                "na":"ナ","ni":"ニ","nu":"ヌ","ne":"ネ","no":"ノ",
+                "ha":"ハ","hi":"ヒ","fu":"フ","he":"ヘ","ho":"ホ",
+                "ba":"バ","bi":"ビ","bu":"ブ","be":"ベ","bo":"ボ",
+                "pa":"パ","pi":"ピ","pu":"プ","pe":"ペ","po":"ポ",
+                "ma":"マ","mi":"ミ","mu":"ム","me":"メ","mo":"モ",
+                "ya":"ヤ","yu":"ユ","yo":"ヨ",
+                "ra":"ラ","ri":"リ","ru":"ル","re":"レ","ro":"ロ",
+                "wa":"ワ","wo":"ヲ"
+            };
+            let alphabets = {hiragana, katakana};
+            let vowels = [" ", "a", "i", "u", "e", "o"];
+            let consonants = [" ", "k", "g", "s", "z", "t", "d", "n", "h", "b", "p", "m", "y", "r", "w"];
+            let allowed = [];
+            let statistics;
+            let statisticsAlphabet = "hiragana";
+            let state = {
+                shown: false,
+                actual: "",
+                japSide: false,
+                alphabet: "hiragana"
+            }
+            let alphabet = alphabets[state.alphabet];
 
-            button:active::after {
-                opacity: 0.32;
-                transform: translate(-50%, -50%) scale(0);
-                transition: transform 0s;
-            }
+            Object.prototype.forEach = function(callback){Object.keys(this).forEach(k => {callback(k, this[k])})};
 
-            button:disabled {
-                color: rgba(0, 0, 0, 0.38);
-                background-color: rgba(0, 0, 0, 0.12);
-                box-shadow: none;
-                cursor: initial;
-            }
-
-            button:disabled::before {
-                opacity: 0;
-            }
-
-            button:disabled::after {
-                opacity: 0;
-            }
-		</style>
-	</head>
-	<body>
-    	<div id="champion-autocomplete">
-			<input id="searchChampion" placeholder="Type the champ to search">
-            <a id="autocomplete-elements">
-            </a>
-        </div>
-        <button onClick="searchChampion();">Search</button><br>
-		<br><hr><br>
-        <input id="searchWord" placeholder="Type the word to search">
-		<select id="select">
-			<option value="enit">enit</option>
-			<option value="iten">iten</option>
-		</select>
-		<button onClick="searchWord();">Search</button>
-		<br><hr><br>
-		<input id="frontWord" placeholder="Type the word on the front of the flashcard"><br>
-		<input id="backWord" placeholder="Type the word on the back of the flashcard">
-		<button onClick="uploadFlashcard();">Upload flashcard</button>
-		<br><hr><br>
-		<table id="flashcards">
-		<thead>
-			<!--th>
-				<td>front</td>
-				<td>back</td>
-			</th-->
-		</thead>
-		</table>
-        <button onClick='location.replace("list.php");'>go to page list</button>
-		<script>
-        	String.prototype.replaceAll = function(a,b){
-            	return this.split(a).join(b);
-            }
-        	String.prototype.containsIgnoreSpecialChars = function(a){
-            	var compString = this.replaceAll(" ","").replaceAll("'","").replaceAll(".","").toLowerCase();
-                var a=a.replaceAll(" ","").replaceAll("'","").replaceAll(".","").toLowerCase();
-            	return compString.includes(a);
-            }
-        	var champions = ["Aatrox","Ahri","Akali","Alistar","Amumu","Anivia","Annie","Aphelios","Ashe","Aurelion Sol","Azir","Bard","Blitzcrank","Brand","Braum","Caitlyn","Camille","Cassiopeia","Cho Gath","Corki","Darius","Diana","Dr. Mundo","Draven","Ekko","Elise","Evelynn","Ezreal","Fiddlesticks","Fiora","Fizz","Galio","Gangplank","Garen","Gnar","Gragas","Graves","Hecarim","Heimerdinger","Illaoi","Irelia","Ivern","Janna","Jarvan IV","Jax","Jayce","Jhin","Jinx","Kai Sa","Kalista","Karma","Karthus","Kassadin","Katarina","Kayle","Kayn","Kennen","Kha Zix","Kindred","Kled","Kog Maw","LeBlanc","Lee Sin","Leona","Lillia","Lissandra","Lucian","Lulu","Lux","Malphite","Malzahar","Maokai","Master Yi","Miss Fortune","Mordekaiser","Morgana","Nami","Nasus","Nautilus","Neeko","Nidalee","Nocturne","Nunu","Olaf","Orianna","Ornn","Pantheon","Poppy","Pyke","Qiyana","Quinn","Rakan","Rammus","Rek Sai","Renekton","Rengar","Riven","Rumble","Ryze","Sejuani","Senna","Sett","Shaco","Shen","Shyvana","Singed","Sion","Sivir","Skarner","Sona","Soraka","Swain","Sylas","Syndra","Tahm Kench","Taliyah","Talon","Taric","Teemo","Thresh","Tristana","Trundle","Tryndamere","Twisted Fate","Twitch","Udyr","Urgot","Varus","Vayne","Veigar","Vel Koz","Vi","Viktor","Vladimir","Volibear","Warwick","Wukong","Xayah","Xerath","Xin Zhao","Yasuo","Yone","Yorick","Yuumi","Zac","Zed","Ziggs","Zilean","Zoe","Zyra"];
-			var table = document.getElementById("flashcards");
-            var championBox = document.getElementById("searchChampion");
-            var autocompleteList = document.getElementById("autocomplete-elements");
-            var championsToLowerCase = [];
-            var active;
-            for(var i = 0; i < champions.length; i++) {
-              	championsToLowerCase[i] = champions[i].toLowerCase();
-            }
-			document.getElementById("searchWord").addEventListener("keyup", function(e){if(e.code=="Enter")searchWord();});
-            championBox.addEventListener("keyup", onChampionBoxKeyUp);
-            championBox.addEventListener("keydown", onChampionBoxKeyDown);
-            championBox.addEventListener("focus",onAutocomplete);
-            championBox.addEventListener("blur",function(){autocompleteList.style.display="none";});
-            //championBox.focus()
-            function changeValue(newVal){
-            	console.log("ciccio");
-            	championBox.value = newVal;
-                autocompleteList.style.display="none";
-            }
-            if (!Element.prototype.scrollIntoViewIfNeeded) {
-                  Element.prototype.scrollIntoViewIfNeeded = function (centerIfNeeded) {
-                    centerIfNeeded = arguments.length === 0 ? true : !!centerIfNeeded;
-
-                    var parent = this.parentNode,
-                        parentComputedStyle = window.getComputedStyle(parent, null),
-                        parentBorderTopWidth = parseInt(parentComputedStyle.getPropertyValue('border-top-width')),
-                        parentBorderLeftWidth = parseInt(parentComputedStyle.getPropertyValue('border-left-width')),
-                        overTop = this.offsetTop - parent.offsetTop < parent.scrollTop,
-                        overBottom = (this.offsetTop - parent.offsetTop + this.clientHeight - parentBorderTopWidth) > (parent.scrollTop + parent.clientHeight),
-                        overLeft = this.offsetLeft - parent.offsetLeft < parent.scrollLeft,
-                        overRight = (this.offsetLeft - parent.offsetLeft + this.clientWidth - parentBorderLeftWidth) > (parent.scrollLeft + parent.clientWidth),
-                        alignWithTop = overTop && !overBottom;
-
-                    if ((overTop || overBottom) && centerIfNeeded) {
-                      parent.scrollTop = this.offsetTop - parent.offsetTop - parent.clientHeight / 2 - parentBorderTopWidth + this.clientHeight / 2;
-                    }
-
-                    if ((overLeft || overRight) && centerIfNeeded) {
-                      parent.scrollLeft = this.offsetLeft - parent.offsetLeft - parent.clientWidth / 2 - parentBorderLeftWidth + this.clientWidth / 2;
-                    }
-
-                    if ((overTop || overBottom || overLeft || overRight) && !centerIfNeeded) {
-                      this.scrollIntoView(alignWithTop);
-                    }
-                  };
-                }
-            
-            function onChampionBoxKeyUp(e){
-            	switch(e.keyCode){
-                	case 13: case 38: case 40:
-                    	break;
-                    default:
-                    	onAutocomplete();
+            function loadStatistics(){
+                statistics = window.localStorage.getItem("japStats");
+                if(!statistics){
+                    statistics = {hiragana: {}, katakana: {}};
+                    Object.keys(alphabet).forEach(key => {
+                        statistics.hiragana[key] = {correct: 0, error:0, last: undefined};
+                        statistics.katakana[key] = {correct: 0, error:0, last: undefined};
+                    });
+                }else{
+                    statistics = JSON.parse(statistics);
                 }
             }
-            function onChampionBoxKeyDown(e){
-            	switch(e.keyCode){
-                	case 13:
-                    	searchChampion();
+
+            function resetStatistics(){
+                window.localStorage.removeItem("japStats");
+                loadStatistics();
+                fillStatsTable();
+            }
+
+            function swapStatisticsAlphabet(){
+                if(statisticsAlphabet === "hiragana"){
+                    statisticsAlphabet = "katakana";
+                }else if(statisticsAlphabet === "katakana"){
+                    statisticsAlphabet = "hiragana";
+                }else{
+                    window.location.reload();
+                }
+                fillStatsTable();
+            }
+
+            function loadElementsOf(obj){
+                Object.keys(obj).forEach(key => {
+                    obj[key] = document.getElementById(key);
+                });
+            }
+
+            function saveStatistics(){
+                window.localStorage.setItem("japStats", JSON.stringify(statistics));
+            }
+
+            function loaded(){
+                loadStatistics();
+                window.addEventListener("beforeunload", saveStatistics);
+                loadElementsOf(panes);
+                loadElementsOf(inputs);
+                loadElementsOf(outputs);
+                allConsonants();
+                allVowels();
+            }
+
+            function pickIndex(len){
+                return Math.floor(Math.random() * len);
+            }
+
+            function pickFromArray(arr){
+                return arr[pickIndex(arr.length)];
+            }
+
+            function advancedPick(arr){
+                if(!arr.picked){
+                    arr.picked = [];
+                    for(let i = 0; i < arr.length; i++){
+                        arr.picked[i] = 0;
+                    }
+                    let index = pickIndex(arr.length);
+                    arr.picked[index]++;
+                    arr.picked.max = 1;
+                    return arr[index];
+                }
+                if(arr.picked.length !== arr.length){
+                    arr.picked = undefined;
+                    return advancedPick(arr);
+                }
+                let pickChance = [];
+                let sum = 0;
+                for(let i = 0; i < arr.length; i++){
+                    pickChance[i] = (arr.picked.max - arr.picked[i]) * 3 + 1;
+                    sum += pickChance[i];
+                }
+                let index = pickIndex(sum);
+                sum = 0;
+                let i;
+                for(i = 0; i < arr.length; i++){
+                    sum += pickChance[i];
+                    if(index < sum)
                         break;
-                    case 38:
-                    	autocompleteListMoveUp();
-                    	break;
-                    case 40:
-                    	autocompleteListMoveDown();
-                    	break;
-                    default:
-                    	onAutocomplete();
                 }
+                let lastUpdatedIndex = ++arr.picked[i];
+                if(lastUpdatedIndex > arr.picked.max)
+                    arr.picked.max = lastUpdatedIndex;
+                return arr[i];
             }
-            
-            function autocompleteListMoveUp(){
-            	if(active==null){
-                	active = autocompleteList.lastChild;
-                }else{
-                	active.className="";
-                    active = active.previousSibling;
-                    if(active == null)active = autocompleteList.lastChild;
-                }
-                console.log(active);
-                active.className = "active";
-                if(active.scrollIntoViewIfNeeded)
-                	active.scrollIntoViewIfNeeded();
-                else
-                	active.scrollIntoView();
+
+            function fillStatsTable(){
+
+                outputs.statistiche.innerHTML = "";
+                statistics[statisticsAlphabet].forEach((k,v) => {
+                    let total = v.correct + v.error;
+                    let percentage = (v.correct / total * 100).toFixed(2);
+                    let newRow = outputs.statistiche.insertRow();
+                    let headCell = newRow.insertCell();
+                    headCell.outerHTML = "<th>" + k + "</th>";
+                    headCell = newRow.insertCell();
+                    headCell.outerHTML = "<th>" + alphabets[statisticsAlphabet][k] + "</th>";
+                    newRow.insertCell().innerHTML = v.correct;
+                    newRow.insertCell().innerHTML = v.error;
+                    newRow.insertCell().innerHTML = total;
+                    newRow.insertCell().innerHTML = isNaN(percentage) ? "" : percentage + "%";
+                    newRow.insertCell().innerHTML = v.last ? v.last.correct ? "Corretto" : "Errato" : "";
+                });
             }
-            
-            function autocompleteListMoveDown(){
-           	 	if(active==null){
-                	active = autocompleteList.firstChild;
-                }else{
-                	active.className="";
-                    active = active.nextSibling;
-                    if(active == null)active = autocompleteList.firstChild;
-                }
-                active.className = "active";
-                if(active.scrollIntoViewIfNeeded)
-                	active.scrollIntoViewIfNeeded();
-                else
-                	active.scrollIntoView();
+
+            function showPane(pane){
+                Object.keys(panes).forEach(key => {panes[key].hidden = true;})
+                pane.hidden = false;
             }
-            
-            function onAutocomplete(){
-            	var finalHTML = "";
-                var count = 0;
-                var lastChamp;
-                for(var i = 0; i<champions.length;i++){
-                	if(champions[i].containsIgnoreSpecialChars(championBox.value)){
-                		finalHTML += "<a onclick=\"changeValue('"+champions[i]+"')\" onmousedown=\"changeValue('"+champions[i]+"')\">"+champions[i]+"</a>";
-                        count++;
-                        lastChamp = champions[i];
+
+            function startButton(){
+                state.alphabet = inputs.selectAlphabet.value;
+                alphabet = alphabets[state.alphabet];
+                allowed = [];
+                let allowedVowels = inputs.inVocali.value.toLowerCase();
+                let allowedConsonants = inputs.inConsonanti.value.toLowerCase();
+                for(let i = 0; i < allowedVowels.length; i++){
+                    for(let j = 0; j < allowedConsonants.length; j++){
+                        let res = allowedConsonants[j] + allowedVowels[i];
+                        res = res.trim();
+                        res = exceptions[res] ? exceptions[res] : res;
+                        if(alphabet[res])
+                            allowed.push(res);
                     }
                 }
-                
-                if(count > 1 || lastChamp != null && lastChamp != championBox.value){
-                	autocompleteList.innerHTML = finalHTML;
-                	autocompleteList.style.display="block";
-                }else{
-                	autocompleteList.style.display="none";
-                }
-                
-                
+                setupNewFlashcardState();
+                showPane(panes.started);
             }
-            
-            function getAutocompleteArray(word){
-            	var arr = [];
-            	for(var i = 0; i<champions.length;i++){
-                	if(champions[i].containsIgnoreSpecialChars(word)){
-                		arr.push(champions[i]);
+
+            function correctButton(){
+                statistics[state.alphabet][state.actual].correct += 1;
+                statistics[state.alphabet][state.actual].last = {correct: true};
+                setupNewFlashcardState();
+            }
+
+            function errorButton(){
+                statistics[state.alphabet][state.actual].error += 1;
+                statistics[state.alphabet][state.actual].last = {correct:false};
+                setupNewFlashcardState();
+            }
+
+            function flashCard(){
+                state.shown |= true;
+                state.japSide = !state.japSide;
+            }
+
+            function statsButton(){
+                fillStatsTable();
+                showPane(panes.statsPane);
+            }
+
+            function setupNewFlashcardState(){
+                state.shown = false;
+                state.actual = advancedPick(allowed);
+                state.japSide = false;
+            }
+
+            function updateView(){
+                panes.buttonBar.hidden = !state.shown;
+                outputs.flashcard.innerHTML = state.japSide ? alphabet[state.actual] : state.actual; 
+            }
+
+            function allVowels(){
+                inputs.inVocali.value = vowels.join("");
+            }
+
+            function allConsonants(){
+                inputs.inConsonanti.value = consonants.join("");
+            }
+
+            /*
+            function test(tests, iterationPerTest){
+                function basePickWithStats(arr){
+                    if(!arr.picked){
+                        arr.picked = [];
+                        for(let i = 0; i < arr.length; i++){
+                            arr.picked[i] = 0;
+                        }
+                        arr.picked.max = 0;
                     }
+                    let i = pickIndex(arr.length);
+                    let lastUpdatedIndex = ++arr.picked[i];
+                    if(lastUpdatedIndex > arr.picked.max)
+                        arr.picked.max = lastUpdatedIndex;
+                    return arr[i];
                 }
-                return arr;
-            }
-            
-			function searchWord(){
-				var lang = document.getElementById("select").value;
-				var word = document.getElementById("searchWord").value;
-				window.open("https://www.wordreference.com/"+lang+"/"+word, '_blank');
-			}
-            
-            function searchChampion(){
-            	var active = autocompleteList.getElementsByClassName("active");
-                if(active.length>0){
-                	championBox.value = active[0].innerHTML;
-                }	
-				var word = championBox.value.toLowerCase().trim();
-                if(championsToLowerCase.includes(word)){
-					window.open("https://www.probuilds.net/champions/details/"+word.replaceAll(" ",""), '_blank');
-                }else{
-                	alert("errrorre");
+
+                function minMaxMapper(arr){
+                    let min = arr[0];
+                    let max = arr[0];
+                    for(let i = 1; i < arr.length; i++){
+                        if(arr[i] > max) max = arr[i];
+                        if(arr[i] < min) min = arr[i];
+                    }
+                    return {min, max};
                 }
-			}            
-			function uploadFlashcard(){
-				var front = document.getElementById("frontWord").value;
-				var back = document.getElementById("backWord").value;
-				var data = {
-					task: "upload",
-					front: front,
-					back: back
-				}
-				httpPost("PHP/flashcards.php",data,true,function(response,status){
-					if(status==200){
-						var row = table.insertRow(table.rows.length);
-						row.insertCell(0).innerHTML=data.front;
-						row.insertCell(1).innerHTML=data.back;
-					}
-				});
-			}
 
-			function httpPost(url, content, isAsync , callback){
-				var request = new XMLHttpRequest();
-				request.onreadystatechange = function() {
-					if (this.readyState == 4) {
-						callback(this.responseText, this.status);
-					}
-				};
-				request.open("POST", url, isAsync);
-				request.send(content);
-			}
+                function avgMinMax(arr){
+                    let minSum = 0, maxSum = 0;
+                    for(let i = 0; i < arr.length; i++){
+                        minSum += arr[i].min;
+                        maxSum += arr[i].max;
+                    }
+                    return {minAvg: minSum / arr.length, maxAvg: maxSum / arr.length};
+                }
 
-			function httpGet(url, isAsync , callback){
-				var request = new XMLHttpRequest();
-				request.onreadystatechange = function() {
-					if (this.readyState == 4) {
-						callback(this.responseText, this.status);
-					}
-				};
-				request.open("GET", url, isAsync);
-				request.send();
-			}
-		</script>
-			
-	</body>
+                if(!tests) tests = 100;
+                if(!iterationPerTest) iterationPerTest = 1000;
+                
+                let testRes = {};
+
+                testRes.baseResults = [];
+                testRes.advaResults = [];
+                for(let i = 0; i < tests; i++){
+                    allowed.picked = undefined;
+                    for(let i = 0; i < iterationPerTest; i++)
+                        basePickWithStats(allowed);
+                        testRes.baseResults.push(allowed.picked);
+                    allowed.picked = undefined;
+                    for(let i = 0; i < iterationPerTest; i++)
+                        advancedPick(allowed);
+                    testRes.advaResults.push(allowed.picked);
+                }
+
+                
+                testRes.baseMinMax = testRes.baseResults.map(minMaxMapper);
+                testRes.advaMinMax = testRes.advaResults.map(minMaxMapper);
+                testRes.baseMinMaxAvg = avgMinMax(testRes.baseMinMax);
+                testRes.advaMinMaxAvg = avgMinMax(testRes.advaMinMax);
+                return testRes;
+            }*/
+
+
+        </script>
+    </head>
+    <body onload="loaded();">
+        <div class="container-fluid" onclick="updateView()">
+            <div class="row my-5">
+                <div class="col-md">
+                    <h1 class="title" onclick="showPane(panes.before);">Japanese Alphabets Test</h1>
+                </div>
+            </div>
+            <div id="started" hidden>
+                <div class="row justify-content-center">
+                    <div onclick="flashCard();" id="flashcard" class="col-md-6 flashcard border bg-light">
+                        か
+                    </div>
+                </div>
+                <div id="buttonBar" class="row justify-content-center mt-5" hidden>
+                    <div class="col-md-2 m1 text-center">
+                        <button type="button" class="btn btn-success" onclick="correctButton();">Corretto</button>
+                    </div>
+                    <div class="col-md-2 m1 text-center">
+                        <button type="button" class="btn btn-danger" onclick="errorButton();">Errato</button>
+                    </div>
+                </div>
+            </div>
+            <div id="before">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                              <label class="input-group-text" for="inputGroupSelect01">Options</label>
+                            </div>
+                            <select class="custom-select" id="selectAlphabet">
+                                <option value="hiragana">hiragana</option>
+                                <option value="katakana">katakana</option>
+                            </select>
+                          </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                            <span class="input-group-text">Vocali</span>
+                            </div>
+                            <input id="inVocali" type="text" class="form-control">
+                            <div class="input-group-append">
+                                <button class="btn btn-secondary" onclick="allVowels();" type="button" id="button-addon2">Tutte</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Consonanti</span>
+                            </div>
+                            <input id="inConsonanti" type="text" class="form-control">
+                            <div class="input-group-append">
+                                <button class="btn btn-secondary" onclick="allConsonants();" type="button" id="button-addon2">Tutte</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-md-2"></div>
+                    <div class="col-md-4 text-center">
+                        <button type="button" class="btn btn-primary" onclick="startButton();">Inizia</button>
+                    </div>
+                    <div class="col-md-2 text-center">
+                        <button type="button" class="btn btn-outline-secondary" onclick="statsButton();">Statistiche</button>
+                    </div>
+                </div>
+            </div>
+            <div id="statsPane" hidden>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="table-responsive border">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>#</th>
+                                        <th>Corrette</th>
+                                        <th>Errate</th>
+                                        <th>Totali</th>
+                                        <th>%Corrette</th>
+                                        <th>Ultimo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="statistiche">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-md-5 text-left mt-3">
+                        <button type="button" class="btn btn-outline-secondary" onclick="swapStatisticsAlphabet()">Cambia alfabeto</button>
+                    </div>
+                    <div class="col-md-5 text-right mt-3">
+                        <button type="button" class="btn btn-outline-secondary" onclick="resetStatistics();">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
 </html>
